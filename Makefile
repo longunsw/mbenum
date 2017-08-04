@@ -1,6 +1,6 @@
 
 OBJECT_DIR = obj
-SRC_DIR    = src
+SRC_DIR    = srctmp
 BIN_DIR    = bin
 
 OBJECTS  = $(OBJECT_DIR)/biclique.o
@@ -26,7 +26,7 @@ all: $(EXECS)
 .PHONY : clean
 
 clean: 
-	rm -rf $(OBJECTS) $(EXECS) $(OBJECT_DIR)  $(SRC_DIR); mkdir $(OBJECT_DIR)  $(SRC_DIR) ; cp meba/src/*.cpp $(SRC_DIR); cp meba/src/*.h $(SRC_DIR) 
+	rm -rf $(OBJECTS) $(EXECS) $(OBJECT_DIR)  $(SRC_DIR); mkdir $(OBJECT_DIR)  $(SRC_DIR) ; cp src/*.cpp $(SRC_DIR); cp src/*.h $(SRC_DIR) 
 
 $(BIN_DIR)/meba: main.cpp ${OBJECTS} 
 	${CC} ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp  -o $@

@@ -77,6 +77,7 @@ public:
 
 	void pruneCore(num_t v1_min, num_t v2_min);
 	void pruneSquare(num_t v1_min, num_t v2_min);
+	void pruneSquareDyn(num_t v1_min, num_t v2_min);
 
 private:
 
@@ -84,6 +85,7 @@ private:
 	void loadGraph(std::string dir);
 	void compressGraph(std::vector<int> &prunedV1, std::vector<int> &prunedV2);
 
+	std::string dir;
 	num_t num_v1;
 	num_t num_v2;
 	num_t num_edges;

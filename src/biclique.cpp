@@ -52,14 +52,19 @@ double time_check, time_expand, time_out, time_sort;
 void BCE::biclique_enumerate(string dir)
 {
 	BiGraph bg(dir);
+	cout << "Number of bicliques         : " << bs.sum << endl;
+	cout << "Size of edge max biclique   : (" << bs.emaxl << ", " << bs.emaxr
+			<< ")\n";
+	cout << "Size of vertex max biclique   : (" << bs.vmaxl << ", " << bs.vmaxr
+			<< ")\n";
 	//bg.print();
 	bg.printSum();
 	//bg.pruneCore(2, 3);
-	bg.pruneSquare(2, 3);
-	//bg.print();
+	bg.pruneSquare(3, 4);
+	bg.print();
 	bg.printSum();
 	cerr << "finishing load the graph" << endl;
-	return;
+	//return;
 
 	//string output = dir + "bg.txt";
 	//FILE *fp1 = fopen(output.c_str(), "w");
@@ -70,6 +75,9 @@ void BCE::biclique_enumerate(string dir)
 	vid_t left[n1], right[n2], clique[n2];
 	vid_t u, v;
 	int noc[n2], tmpnoc, x;
+
+	cout<<n1<<endl;
+	cout<<n2<<endl;
 
 	memset(clique, -1, n2 * sizeof(vid_t));  // initially Clique is empty
 	for (u = 0; u < n1; u++)
@@ -142,13 +150,13 @@ void BCE::biclique_out(FILE *fp, vid_t *right, int nr, vid_t *left, int nl)
 		bs.vmaxr = nr;
 	}
 	/*if (bs.sum % 1000 == 0)
-	{
-		cout << "Number of bicliques         : " << bs.sum << endl;
-		cout << "Size of edge max biclique   : (" << bs.emaxl << ", "
-				<< bs.emaxr << ")\n";
-		cout << "Size of vertex max biclique   : (" << bs.vmaxl << ", "
-				<< bs.vmaxr << ")\n";
-	}*/
+	 {
+	 cout << "Number of bicliques         : " << bs.sum << endl;
+	 cout << "Size of edge max biclique   : (" << bs.emaxl << ", "
+	 << bs.emaxr << ")\n";
+	 cout << "Size of vertex max biclique   : (" << bs.vmaxl << ", "
+	 << bs.vmaxr << ")\n";
+	 }*/
 
 #ifdef PRINT
 	int i;

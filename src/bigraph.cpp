@@ -28,6 +28,7 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
+#include <cstdio>
 #include <list>
 #include <vector>
 #include <unordered_set>
@@ -40,22 +41,40 @@ using namespace std;
 
 BiGraph::BiGraph(string dir)
 {
+	this->dir = dir;
 	loadGraph(dir);
 }
 
 void BiGraph::print()
 {
-	cout << "\nBiGraph: " << endl;
+	string bigraphE = dir + "compressed.e";
+	string bigraphMeta = dir + "compressed.meta";
+
+	FILE *graphEF = fopen(bigraphE.c_str(), "w");
+	FILE *graphMetaF = fopen(bigraphMeta.c_str(), "w");
+
+	fprintf(graphMetaF, "%d\n%d\n%d\n", num_v1, num_v2, num_edges);
+	fclose(graphMetaF);
 	for (int i = 0; i < num_v1; ++i)
 	{
-		cout << i << ": ";
 		for (int j = 0; j < neighbor_v1[i].size(); ++j)
 		{
-			cout << neighbor_v1[i][j] << ", ";
+			fprintf(graphEF, "%d %d\n", i, neighbor_v1[i][j]);
 		}
-		cout << endl;
 	}
-	cout << endl;
+	fclose(graphEF);
+
+	/*cout << "\nBiGraph: " << endl;
+	 for (int i = 0; i < num_v1; ++i)
+	 {
+	 cout << i << ": ";
+	 for (int j = 0; j < neighbor_v1[i].size(); ++j)
+	 {
+	 cout << neighbor_v1[i][j] << ", ";
+	 }
+	 cout << endl;
+	 }
+	 cout << endl;*/
 }
 
 void BiGraph::printSum()
@@ -403,6 +422,63 @@ void BiGraph::pruneSquare(num_t v1_min, num_t v2_min)
 	cout << "total Square: " << totalSquare << endl;
 }
 
+void BiGraph::pruneSquareDyn(num_t v1_min, num_t v2_min)
+{
+	map<Edge, int> support;
+	map<Edge, set<int>> adjEdge;
+	set<int> v2hop;
+
+	vector<int> squareNum;
+	squareNum.resize(num_v1);
+	fill_n(squareNum.begin(), num_v1, 0);
+
+	int minSupport = (v1_min - 1) * (v2_min - 1);
+	int edges = 0;
+
+	for (int u = 0; u < num_v1; ++u)
+	{
+		for (int j = 0; j < neighbor_v1[u].size(); ++j)
+		{
+			int v = neighbor_v1[u][j];
+			support[Edge(u, v)] = 0;
+		}
+	}
+
+	for (int u = 0; u < num_v1; ++u)
+	{
+		for (int j = 0; j < neighbor_v1[u].size(); ++j)
+		{
+			int v = neighbor_v1[u][j];
+			for (int k = 0; k < neighbor_v2[v].size(); ++k)
+			{
+				int uu = neighbor_v2[v][k];
+				if (uu != u)
+				{
+					adjEdge[Edge(u, uu)].insert(v);
+					v2hop.insert(uu);
+				}
+			}
+		}
+
+		for (auto it = v2hop.begin(); it != v2hop.end(); ++it)
+		{
+			int uu = *it;
+			Edge e(u, uu);
+			squareNum[u] += (adjEdge[e].size() * (adjEdge[e].size() - 1));
+
+			for (auto it = adjEdge[e].begin(); it != adjEdge[e].end(); ++it)
+			{
+				int v = *it;
+				support[Edge(u, v)] += adjEdge[e].size() - 1;
+
+			}
+		}
+		v2hop.clear();
+		adjEdge.clear();
+	}
+
+}
+
 void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 {
 	num_t order = 0;
@@ -431,6 +507,11 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 	n_neighbor_v1.resize(n_num_v1);
 	vector<vector<vid_t>> n_neighbor_v2;
 	n_neighbor_v2.resize(n_num_v2);
+
+	vector<int> n_degree_v1;
+	n_degree_v1.resize(n_num_v1);
+	vector<int> n_degree_v2;
+	n_degree_v2.resize(n_num_v2);
 
 	for (int i = 0; i < num_v1; ++i)
 	{
@@ -461,12 +542,14 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 	{
 		n_neighbor_v1[i].shrink_to_fit();
 		sort(n_neighbor_v1[i].begin(), n_neighbor_v1[i].end());
+		n_degree_v1[i] = n_neighbor_v1[i].size();
 
 	}
 	for (int i = 0; i < n_num_v2; ++i)
 	{
 		n_neighbor_v2[i].shrink_to_fit();
 		sort(n_neighbor_v2[i].begin(), n_neighbor_v2[i].end());
+		n_degree_v2[i] = n_neighbor_v2[i].size();
 	}
 
 	num_v1 = n_num_v1;
@@ -474,4 +557,21 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 	num_edges = n_edges;
 	swap(neighbor_v1, n_neighbor_v1);
 	swap(neighbor_v2, n_neighbor_v2);
+	swap(degree_v1, n_degree_v1);
+	swap(degree_v2, n_degree_v2);
+
+	for (int i = 0; i < num_v1; ++i)
+	{
+		if (neighbor_v1[i].size() != degree_v1[i])
+			cout << "degree error" << endl;
+	}
+
+	for (int i = 0; i < num_v2; ++i)
+	{
+		if (neighbor_v2[i].size() != degree_v2[i])
+			cout << "degree error" << endl;
+	}
+
+	cout<<"degree correct"<<endl;
+
 }

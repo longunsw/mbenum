@@ -560,7 +560,7 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 	swap(degree_v1, n_degree_v1);
 	swap(degree_v2, n_degree_v2);
 
-	for (int i = 0; i < num_v1; ++i)
+	/*for (int i = 0; i < num_v1; ++i)
 	{
 		if (neighbor_v1[i].size() != degree_v1[i])
 			cout << "degree error" << endl;
@@ -572,6 +572,6 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 			cout << "degree error" << endl;
 	}
 
-	cout<<"degree correct"<<endl;
+	cout<<"degree correct"<<endl;*/
 
 }

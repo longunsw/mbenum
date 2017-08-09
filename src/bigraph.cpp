@@ -321,7 +321,7 @@ void BiGraph::pruneCore(num_t v1_min, num_t v2_min)
 
 }
 
-void BiGraph::pruneSquare(num_t v1_min, num_t v2_min)
+void BiGraph::pruneSquareEdge(num_t v1_min, num_t v2_min)
 {
 	map<Edge, int> support;
 	map<Edge, set<int>> adjEdge;
@@ -418,8 +418,146 @@ void BiGraph::pruneSquare(num_t v1_min, num_t v2_min)
 
 	compressGraph(prunedV1, prunedV2);
 
-	cout << "number of edges pruned: " << edges << endl;
-	cout << "total Square: " << totalSquare << endl;
+}
+
+void BiGraph::pruneSquareNode(num_t v1_min, num_t v2_min)
+{
+	map<Edge, set<int>> adjEdge;
+	set<int> v2hop;
+
+	vector<int> prunedV1;
+	vector<int> prunedV2;
+	prunedV1.resize(num_v1);
+	prunedV2.resize(num_v2);
+	fill_n(prunedV1.begin(), num_v1, 0);
+	fill_n(prunedV2.begin(), num_v2, 0);
+
+	for (int u = 0; u < num_v1; ++u)
+	{
+		for (int j = 0; j < neighbor_v1[u].size(); ++j)
+		{
+			int v = neighbor_v1[u][j];
+			for (int k = 0; k < neighbor_v2[v].size(); ++k)
+			{
+				int uu = neighbor_v2[v][k];
+				if (uu != u)
+				{
+					adjEdge[Edge(u, uu)].insert(v);
+					v2hop.insert(uu);
+				}
+			}
+		}
+
+		int cnt = 0;
+		for (auto it = v2hop.begin(); it != v2hop.end(); ++it)
+		{
+			int uu = *it;
+			Edge e(u, uu);
+
+			if (adjEdge[e].size() > v2_min - 1)
+			{
+				cnt++;
+			}
+		}
+		if (cnt < v1_min - 1)
+			prunedV1[u] = -1;
+		v2hop.clear();
+		adjEdge.clear();
+	}
+
+	compressGraph(prunedV1, prunedV2);
+}
+
+void BiGraph::pruneSquare(num_t v1_min, num_t v2_min)
+{
+	map<Edge, int> support;
+	map<Edge, set<int>> adjEdge;
+	set<int> v2hop;
+
+	vector<int> prunedV1;
+	vector<int> prunedV2;
+	prunedV1.resize(num_v1);
+	prunedV2.resize(num_v2);
+	fill_n(prunedV1.begin(), num_v1, 0);
+	fill_n(prunedV2.begin(), num_v2, 0);
+
+	int minSupport = (v1_min - 1) * (v2_min - 1);
+	int edges = 0;
+
+	for (int u = 0; u < num_v1; ++u)
+	{
+		for (int j = 0; j < neighbor_v1[u].size(); ++j)
+		{
+			int v = neighbor_v1[u][j];
+			support[Edge(u, v)] = 0;
+		}
+	}
+
+	for (int u = 0; u < num_v1; ++u)
+	{
+		for (int j = 0; j < neighbor_v1[u].size(); ++j)
+		{
+			int v = neighbor_v1[u][j];
+			for (int k = 0; k < neighbor_v2[v].size(); ++k)
+			{
+				int uu = neighbor_v2[v][k];
+				if (uu != u)
+				{
+					adjEdge[Edge(u, uu)].insert(v);
+					v2hop.insert(uu);
+				}
+			}
+		}
+
+		int cnt = 0;
+
+		for (auto it = v2hop.begin(); it != v2hop.end(); ++it)
+		{
+			int uu = *it;
+			Edge e(u, uu);
+
+			for (auto it = adjEdge[e].begin(); it != adjEdge[e].end(); ++it)
+			{
+				int v = *it;
+				support[Edge(u, v)] += adjEdge[e].size() - 1;
+			}
+
+			if (adjEdge[e].size() > v2_min - 1)
+			{
+				cnt++;
+			}
+		}
+		if (cnt < v1_min - 1)
+			prunedV1[u] = -1;
+		v2hop.clear();
+		adjEdge.clear();
+	}
+
+	for (auto it = support.begin(); it != support.end(); ++it)
+	{
+		if (it->second < minSupport)
+		{
+			deleteEdge(it->first.u, it->first.v);
+			edges++;
+		}
+
+	}
+
+
+	for (int i = 0; i < num_v1; ++i)
+	{
+		if (degree_v1[i] == 0)
+			prunedV1[i] = -1;
+	}
+
+	for (int i = 0; i < num_v2; ++i)
+	{
+		if (degree_v2[i] == 0)
+			prunedV2[i] = -1;
+	}
+
+	compressGraph(prunedV1, prunedV2);
+
 }
 
 void BiGraph::pruneSquareDyn(num_t v1_min, num_t v2_min)
@@ -552,6 +690,7 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 		n_degree_v2[i] = n_neighbor_v2[i].size();
 	}
 
+	cout << "edge pruned: " << num_edges - n_edges << endl;
 	num_v1 = n_num_v1;
 	num_v2 = n_num_v2;
 	num_edges = n_edges;
@@ -561,17 +700,17 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 	swap(degree_v2, n_degree_v2);
 
 	/*for (int i = 0; i < num_v1; ++i)
-	{
-		if (neighbor_v1[i].size() != degree_v1[i])
-			cout << "degree error" << endl;
-	}
+	 {
+	 if (neighbor_v1[i].size() != degree_v1[i])
+	 cout << "degree error" << endl;
+	 }
 
-	for (int i = 0; i < num_v2; ++i)
-	{
-		if (neighbor_v2[i].size() != degree_v2[i])
-			cout << "degree error" << endl;
-	}
+	 for (int i = 0; i < num_v2; ++i)
+	 {
+	 if (neighbor_v2[i].size() != degree_v2[i])
+	 cout << "degree error" << endl;
+	 }
 
-	cout<<"degree correct"<<endl;*/
+	 cout<<"degree correct"<<endl;*/
 
 }

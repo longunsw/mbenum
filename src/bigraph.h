@@ -77,7 +77,9 @@ public:
 
 	void pruneCore(num_t v1_min, num_t v2_min);
 	void pruneSquare(num_t v1_min, num_t v2_min);
+	void pruneSquareEdge(num_t v1_min, num_t v2_min);
 	void pruneSquareDyn(num_t v1_min, num_t v2_min);
+	void pruneSquareNode(num_t v1_min, num_t v2_min);
 
 private:
 

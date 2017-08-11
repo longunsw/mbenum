@@ -7,7 +7,7 @@ OBJECTS  = $(OBJECT_DIR)/biclique.o
 OBJECTS += $(OBJECT_DIR)/bigraph.o
 OBJECTS += $(OBJECT_DIR)/utility.o
 
-EXEC_NAMES = mebaPrune
+EXEC_NAMES = meba
 
 EXECS = $(addprefix $(BIN_DIR)/, $(EXEC_NAMES))
 
@@ -28,7 +28,7 @@ all: $(EXECS)
 clean: 
 	rm -rf $(OBJECTS) $(EXECS) $(OBJECT_DIR)  $(SRC_DIR); mkdir $(OBJECT_DIR)  $(SRC_DIR) ; cp src/*.cpp $(SRC_DIR); cp src/*.h $(SRC_DIR) 
 
-$(BIN_DIR)/mebaPrune: main.cpp ${OBJECTS} 
+$(BIN_DIR)/meba: main.cpp ${OBJECTS} 
 	${CC} ${DEFINE} ${OBJECTS} $(SRC_DIR)/main.cpp  -o $@
 
 $(OBJECT_DIR)/biclique.o: biclique.cpp biclique.h 

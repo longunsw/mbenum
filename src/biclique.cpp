@@ -62,7 +62,7 @@ void BCE::biclique_enumerate(string dir)
 	//bg.print();
 	bg.printSum();
 	cerr << "finishing load the graph" << endl;
-	return;
+	//return;
 
 	//string output = dir + "bg.txt";
 	//FILE *fp1 = fopen(output.c_str(), "w");
@@ -366,7 +366,7 @@ void BCE::biclique_find_basic(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
 void BCE::biclique_find_improve(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
 		vid_t *left, int nl, vid_t *right, int ne, int ce)
 {
-	unsigned int n1 = bg.getV1Num();
+	//unsigned int n1 = bg.getV1Num();
 	vid_t new_left[nl];
 	vid_t new_right[ce];
 	vid_t u, v, w, j, k;
@@ -542,6 +542,12 @@ void BCE::biclique_find_improve(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
 	}
 
 	return;
+}
+
+void BCE::biclique_find_pivot(BiGraph &bg, vid_t *clique, int nc, vid_t *left,
+		int nl, vid_t *right, int ne, int ce)
+{
+
 }
 
 BiCliqueStat bsInit()

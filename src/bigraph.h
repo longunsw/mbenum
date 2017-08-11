@@ -73,6 +73,7 @@ public:
 	num_t getV2Degree(vid_t u) {return degree_v2[u];}
 	void print();
 	void printSum();
+	void printCout();
 
 
 	void pruneCore(num_t v1_min, num_t v2_min);

@@ -33,7 +33,14 @@
 
 struct BiCliqueStat
 {
-	BiCliqueStat(){sum = 0; emaxl = 0; emaxr = 0; vmaxl = 0; vmaxr = 0;}
+	BiCliqueStat()
+	{
+		sum = 0;
+		emaxl = 0;
+		emaxr = 0;
+		vmaxl = 0;
+		vmaxr = 0;
+	}
 	unsigned long sum;
 	unsigned int emaxl;
 	unsigned int emaxr;
@@ -54,6 +61,8 @@ private:
 			int nc, vid_t *left, int nl, vid_t *right, int ne, int ce);
 	static void biclique_out(FILE *fp, vid_t *right, int nr, vid_t *left,
 			int nl);
+	static void biclique_find_pivot(BiGraph &bg, vid_t *clique, int nc,
+			vid_t *left, int nl, vid_t *right, int ne, int ce);
 
 	static BiCliqueStat bs;
 };

@@ -44,8 +44,9 @@ extern int PRINT;
 #ifdef PERFORMANCE
 extern long long node_num;
 extern double time_check, time_expand, time_out, time_sort;
-double time_in, sstime;
 #endif
+double time_in, sstime;
+
 FILE *fp;
 char infn[100];
 char *outfn;
@@ -74,8 +75,8 @@ void argument_parse(int argc, char **argv)
 	exit(1);
   }
   
-  LLEAST = 1;
-  RLEAST = 1;
+  LLEAST = 2;
+  RLEAST = 3;
   VERSION = 2;
   PRINT = 0;
   outfn = NULL;
@@ -110,9 +111,8 @@ void argument_parse(int argc, char **argv)
 
 void maximal_biclique(char *dir)
 {
-#ifdef PERFORMANCE
+
   double utime;
-#endif
 
 #ifdef PERFORMANCE
   node_num = 0;
@@ -124,8 +124,10 @@ void maximal_biclique(char *dir)
 
   BCE::biclique_enumerate(std::string(dir));
 
-#ifdef PERFORMANCE
   utime = get_cur_time() - sstime;
+  fprintf(stdout, "%f total time\n", utime);
+
+#ifdef PERFORMANCE
   FILE *fp2 = stdout;
   fprintf(fp2, "\n");
   fprintf(fp2, "%lld tree nodes\n", node_num);
@@ -134,7 +136,6 @@ void maximal_biclique(char *dir)
   fprintf(fp2, "%f check\n", time_check);
   fprintf(fp2, "%f output\n", time_out);
   fprintf(fp2, "%f sorting\n", time_sort);
-  fprintf(fp2, "%f total time\n", utime);
 #endif
 
 #ifdef VERBOSE 
@@ -149,13 +150,7 @@ int main(int argc, char  **argv)
 
   argument_parse(argc, argv);
   
-#ifdef PERFORMANCE
   sstime = get_cur_time();
-#endif
-
-#ifdef PERFORMANCE
-  time_in = get_cur_time() - sstime;
-#endif
 
   maximal_biclique(argv[1]);
 

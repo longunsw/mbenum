@@ -63,18 +63,22 @@ void BiGraph::print()
 		}
 	}
 	fclose(graphEF);
+}
 
-	/*cout << "\nBiGraph: " << endl;
-	 for (int i = 0; i < num_v1; ++i)
-	 {
-	 cout << i << ": ";
-	 for (int j = 0; j < neighbor_v1[i].size(); ++j)
-	 {
-	 cout << neighbor_v1[i][j] << ", ";
-	 }
-	 cout << endl;
-	 }
-	 cout << endl;*/
+void BiGraph::printCout()
+{
+	cout << "\nBiGraph: " << endl;
+	for (int i = 0; i < num_v1; ++i)
+	{
+		cout << i << ": ";
+		for (int j = 0; j < neighbor_v1[i].size(); ++j)
+		{
+			cout << neighbor_v1[i][j] << ", ";
+		}
+		cout << endl;
+	}
+	cout << endl;
+
 }
 
 void BiGraph::printSum()
@@ -252,9 +256,9 @@ void BiGraph::pruneCore(num_t v1_min, num_t v2_min)
 
 	int curV1Degree = 0;
 	int curV2Degree = 0;
-	while (curV1Degree < v1_min || curV2Degree < v2_min)
+	while (curV1Degree < v1_min - 1 || curV2Degree < v2_min - 1)
 	{
-		while (curV1Degree < v1_min)
+		while (curV1Degree < v1_min - 1)
 		{
 			while (!v1pool[curV1Degree].empty())
 			{
@@ -286,7 +290,7 @@ void BiGraph::pruneCore(num_t v1_min, num_t v2_min)
 
 		//cout<<"curV1Degree: "<<curV1Degree<<", curV2Degree: "<<curV2Degree<<endl;
 
-		while (curV2Degree < v2_min)
+		while (curV2Degree < v2_min - 1)
 		{
 			while (!v2pool[curV2Degree].empty())
 			{
@@ -543,7 +547,6 @@ void BiGraph::pruneSquare(num_t v1_min, num_t v2_min)
 
 	}
 
-
 	for (int i = 0; i < num_v1; ++i)
 	{
 		if (degree_v1[i] == 0)
@@ -691,13 +694,28 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 	}
 
 	cout << "edge pruned: " << num_edges - n_edges << endl;
-	num_v1 = n_num_v1;
-	num_v2 = n_num_v2;
-	num_edges = n_edges;
-	swap(neighbor_v1, n_neighbor_v1);
-	swap(neighbor_v2, n_neighbor_v2);
-	swap(degree_v1, n_degree_v1);
-	swap(degree_v2, n_degree_v2);
+
+	if (n_num_v1 > n_num_v2)
+	{
+		num_v1 = n_num_v1;
+		num_v2 = n_num_v2;
+		num_edges = n_edges;
+		swap(neighbor_v1, n_neighbor_v1);
+		swap(neighbor_v2, n_neighbor_v2);
+		swap(degree_v1, n_degree_v1);
+		swap(degree_v2, n_degree_v2);
+	}
+	else
+	{
+		num_v1 = n_num_v2;
+		num_v2 = n_num_v1;
+		num_edges = n_edges;
+		swap(neighbor_v2, n_neighbor_v1);
+		swap(neighbor_v1, n_neighbor_v2);
+		swap(degree_v2, n_degree_v1);
+		swap(degree_v1, n_degree_v2);
+
+	}
 
 	/*for (int i = 0; i < num_v1; ++i)
 	 {

@@ -141,16 +141,35 @@ int main(int argc, char **argv)
 
 	}
 
-	fprintf(stderr, "%d %d %zu\n", lOrder, rOrder, edges);
-	fprintf(meta, "%d\n", lOrder);
-	fprintf(meta, "%d\n", rOrder);
-	fprintf(meta, "%zu\n", edges);
-	for (int i = 0; i < lOrder; ++i)
+	if(rOrder < lOrder)
 	{
-		for (int j = 0; j < graph[i].size(); ++j)
+		fprintf(stderr, "%d %d %zu\n", lOrder, rOrder, edges);
+		fprintf(meta, "%d\n", lOrder);
+		fprintf(meta, "%d\n", rOrder);
+		fprintf(meta, "%zu\n", edges);
+		for (int i = 0; i < lOrder; ++i)
 		{
-			fprintf(edge, "%d %d\n", i, graph[i][j]);
+			for (int j = 0; j < graph[i].size(); ++j)
+			{
+				fprintf(edge, "%d %d\n", i, graph[i][j]);
+			}
 		}
+	}
+	else
+	{
+		fprintf(stderr, "%d %d %zu\n", rOrder, lOrder, edges);
+		fprintf(meta, "%d\n", rOrder);
+		fprintf(meta, "%d\n", lOrder);
+		fprintf(meta, "%zu\n", edges);
+		for (int i = 0; i < lOrder; ++i)
+		{
+			for (int j = 0; j < graph[i].size(); ++j)
+			{
+				fprintf(edge, "%d %d\n", graph[i][j], i);
+			}
+		}
+
+
 	}
 
 	fclose(edge);

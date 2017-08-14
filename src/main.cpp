@@ -32,10 +32,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <string>
+#include <iostream>
 #include "bigraph.h"
 #include "utility.h"
 #include "biclique.h"
 
+using namespace std;
 
 extern int LLEAST, RLEAST;
 extern int CACHE_SIZE;
@@ -53,107 +55,131 @@ char *outfn;
 
 void print_options(void)
 {
-  fprintf(stderr, "\n Options: \n");
-  fprintf(stderr, "  -v [1|2]       algorithm version <default = 2>\n");
-  fprintf(stderr, "                   1 - original MBEA\n");
-  fprintf(stderr, "                   2 - improved MBEA\n");
-  fprintf(stderr, "  -p             print out bicliques <default = no print out>\n");
-  fprintf(stderr, "  -o <filename>  output filename to store bicliques if choose to print\n");
-  fprintf(stderr, "                 <default = STDOUT>\n");
-  fprintf(stderr, "  -l <value>     least number of left vertices in biclique <default = 1>\n");
-  fprintf(stderr, "  -r <value>     least number of right vertices in biclqiue <default = 1>\n");
-  fprintf(stderr, "\n");
+	fprintf(stderr, "\n Options: \n");
+	fprintf(stderr, "  -v [1|2]       algorithm version <default = 2>\n");
+	fprintf(stderr, "                   1 - original MBEA\n");
+	fprintf(stderr, "                   2 - improved MBEA\n");
+	fprintf(stderr,
+			"  -p             print out bicliques <default = no print out>\n");
+	fprintf(stderr,
+			"  -o <filename>  output filename to store bicliques if choose to print\n");
+	fprintf(stderr, "                 <default = STDOUT>\n");
+	fprintf(stderr,
+			"  -l <value>     least number of left vertices in biclique <default = 1>\n");
+	fprintf(stderr,
+			"  -r <value>     least number of right vertices in biclqiue <default = 1>\n");
+	fprintf(stderr, "\n");
 }
 
 void argument_parse(int argc, char **argv)
 {
-  int i;
-  
-  if (argc < 2) {
-    fprintf(stderr, "Usage: %s Graph <options>\n", argv[0]);
-    print_options();
-	exit(1);
-  }
-  
-  LLEAST = 2;
-  RLEAST = 3;
-  VERSION = 2;
-  PRINT = 0;
-  outfn = NULL;
-  
-  for (i = 2; i < argc; i++) {
-	if (!strcmp(argv[i], "-o")) {
-	  outfn = strdup(argv[++i]);
-	}
-	if (!strcmp(argv[i], "-l")) {
-	  LLEAST = atoi(argv[++i]);
-	}
-	if (!strcmp(argv[i], "-r")) {
-	  RLEAST = atoi(argv[++i]);
-	}
-	if (!strcmp(argv[i], "-v")) {
-	  VERSION = atoi(argv[++i]);
-	}
-	if (!strcmp(argv[i], "-p")) {
-	  PRINT = 1;
-	}
-  }
+	int i;
 
-  strcpy(infn, argv[1]);
-  if ((fp = fopen(infn, "r")) == NULL) {
-    fprintf(stderr, "Can't open file %s\n", infn);
-    exit(-1);
-  }
+	if (argc < 2)
+	{
+		fprintf(stderr, "Usage: %s Graph <options>\n", argv[0]);
+		print_options();
+		exit(1);
+	}
 
-  return;
+	LLEAST = 2;
+	RLEAST = 3;
+	VERSION = 3;
+	PRINT = 0;
+	outfn = NULL;
+
+	for (i = 2; i < argc; i++)
+	{
+		if (!strcmp(argv[i], "-o"))
+		{
+			outfn = strdup(argv[++i]);
+		}
+		if (!strcmp(argv[i], "-l"))
+		{
+			LLEAST = atoi(argv[++i]);
+		}
+		if (!strcmp(argv[i], "-r"))
+		{
+			RLEAST = atoi(argv[++i]);
+		}
+		if (!strcmp(argv[i], "-v"))
+		{
+			VERSION = atoi(argv[++i]);
+		}
+		if (!strcmp(argv[i], "-p"))
+		{
+			PRINT = 1;
+		}
+	}
+
+	strcpy(infn, argv[1]);
+	if ((fp = fopen(infn, "r")) == NULL)
+	{
+		fprintf(stderr, "Can't open file %s\n", infn);
+		exit(-1);
+	}
+
+	return;
 }
-
 
 void maximal_biclique(char *dir)
 {
 
-  double utime;
+	double utime;
 
 #ifdef PERFORMANCE
-  node_num = 0;
-  time_check = 0.0;
-  time_expand = 0.0;
-  time_out = 0.0;
-  time_sort = 0.0;
+	node_num = 0;
+	time_check = 0.0;
+	time_expand = 0.0;
+	time_out = 0.0;
+	time_sort = 0.0;
 #endif
 
-  BCE::biclique_enumerate(std::string(dir));
+	BiGraph bg(dir);
+	//bg.print();
+	bg.printSum();
+	//bg.printCout();
+	bg.pruneSquareEdge(2, 3);
+	//bg.pruneSquareNode(2, 3);
+	//bg.pruneSquare(2, 3);
+	bg.printSum();
+	//bg.pruneCore(2, 3);
+	//bg.print();
+	//bg.printCout();
+	cerr << "finishing load the graph" << endl;
 
-  utime = get_cur_time() - sstime;
-  fprintf(stdout, "%f total time\n", utime);
+	BCE bce(bg, dir, LLEAST, RLEAST);
+	bce.biclique_enumerate();
+
+	utime = get_cur_time() - sstime;
+	fprintf(stdout, "%f total time\n", utime);
 
 #ifdef PERFORMANCE
-  FILE *fp2 = stdout;
-  fprintf(fp2, "\n");
-  fprintf(fp2, "%lld tree nodes\n", node_num);
-  fprintf(fp2, "%f readin\n", time_in);
-  fprintf(fp2, "%f expand\n", time_expand);
-  fprintf(fp2, "%f check\n", time_check);
-  fprintf(fp2, "%f output\n", time_out);
-  fprintf(fp2, "%f sorting\n", time_sort);
+	FILE *fp2 = stdout;
+	fprintf(fp2, "\n");
+	fprintf(fp2, "%lld tree nodes\n", node_num);
+	fprintf(fp2, "%f readin\n", time_in);
+	fprintf(fp2, "%f expand\n", time_expand);
+	fprintf(fp2, "%f check\n", time_check);
+	fprintf(fp2, "%f output\n", time_out);
+	fprintf(fp2, "%f sorting\n", time_sort);
 #endif
 
 #ifdef VERBOSE 
-  printf("find biclique in %f seconds\n", utime);
+	printf("find biclique in %f seconds\n", utime);
 #endif
 
 }
 
-
-int main(int argc, char  **argv)
+int main(int argc, char **argv)
 {
 
-  argument_parse(argc, argv);
-  
-  sstime = get_cur_time();
+	argument_parse(argc, argv);
 
-  maximal_biclique(argv[1]);
+	sstime = get_cur_time();
 
-  exit(0);
+	maximal_biclique(argv[1]);
+
+	exit(0);
 }
 

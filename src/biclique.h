@@ -26,6 +26,10 @@
 #define __BICLIQUE_H
 
 #include <string>
+#include <vector>
+#include <algorithm>
+#include <list>
+#include <set>
 
 /* ---------------------------------------- *
  * Biclique Enumeration Functions           *
@@ -52,19 +56,43 @@ class BCE
 {
 public:
 
-	static void biclique_enumerate(std::string dir);
+	BCE(BiGraph &bg_, std::string dir_, int v1_min_, int v2_min_) :
+			bg(bg_), dir(dir_), v1_min(v1_min_), v2_min(v2_min_), bs(
+					BiCliqueStat())
+	{
+		leftBit.resize(bg.getV1Num());
+		fill_n(leftBit.begin(), bg.getV1Num(), -1);
+		candBit.resize(bg.getV2Num());
+		fill_n(candBit.begin(), bg.getV2Num(), -1);
+		dupBit.resize(bg.getV2Num());
+		fill_n(dupBit.begin(), bg.getV2Num(), -1);
+	}
+
+	void biclique_enumerate();
 
 private:
-	static void biclique_find_basic(FILE *fp, BiGraph &bg, vid_t *clique,
-			int nc, vid_t *left, int nl, vid_t *right, int ne, int ce);
-	static void biclique_find_improve(FILE *fp, BiGraph &bg, vid_t *clique,
-			int nc, vid_t *left, int nl, vid_t *right, int ne, int ce);
-	static void biclique_out(FILE *fp, vid_t *right, int nr, vid_t *left,
-			int nl);
-	static void biclique_find_pivot(BiGraph &bg, vid_t *clique, int nc,
+	void biclique_find_basic(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
 			vid_t *left, int nl, vid_t *right, int ne, int ce);
+	void biclique_find_improve(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
+			vid_t *left, int nl, vid_t *right, int ne, int ce);
+	void biclique_find_improve2(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
+				vid_t *left, int nl, vid_t *right, int ne, int ce);
+	/*void biclique_find(BiGraph &bg, vid_t *left, int nl, vid_t *par, int np,
+			vid_t *cand, int nd, int nc, int &level);*/
+	void biclique_out(FILE *fp, vid_t *left, int nl, vid_t *right, int nr);
+	void biclique_find_pivot(BiGraph &bg, vid_t *clique, int nc, vid_t *left,
+			int nl, vid_t *right, int ne, int ce);
 
-	static BiCliqueStat bs;
+	BiGraph &bg;
+	std::string dir;
+	int v1_min;
+	int v2_min;
+	BiCliqueStat bs;
+	std::vector<int> leftBit;
+	std::vector<int> candBit;
+	std::vector<int> dupBit;
+	std::list<int> adjPrunList;
+	std::set<int> adjPrunNodes;
 };
 
 #endif

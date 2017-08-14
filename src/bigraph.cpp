@@ -34,10 +34,13 @@
 #include <unordered_set>
 #include <map>
 #include <set>
+#include <cstdlib>
 #include "utility.h"
 using namespace std;
 
 #define LINE_LENGTH 1000
+
+
 
 BiGraph::BiGraph(string dir)
 {
@@ -71,6 +74,11 @@ void BiGraph::printCout()
 	for (int i = 0; i < num_v1; ++i)
 	{
 		cout << i << ": ";
+		if(neighbor_v1[i].size() == 0)
+		{
+			cout<<"compress error"<<endl;
+			exit(1);
+		}
 		for (int j = 0; j < neighbor_v1[i].size(); ++j)
 		{
 			cout << neighbor_v1[i][j] << ", ";
@@ -157,6 +165,29 @@ void BiGraph::loadGraph(string dir)
 		sort(neighbor_v2[i].begin(), neighbor_v2[i].end());
 	}
 
+	//neighborHash_v1.resize(num_v1);
+	//neighborHash_v2.resize(num_v2);
+
+//	for (int i = 0; i < num_v1; ++i)
+//	{
+//		neighborHash_v1[i].reserve(10*neighbor_v1[i].size());
+//		for (int j = 0; j < neighbor_v1[i].size(); ++j)
+//		{
+//			int v = neighbor_v1[i][j];
+//			neighborHash_v1[i].insert(v);
+//		}
+//	}
+
+//	for (int i = 0; i < num_v2; ++i)
+//	{
+//		neighborHash_v2[i].reserve(2*neighbor_v2[i].size());
+//		for (int j = 0; j < neighbor_v2[i].size(); ++j)
+//		{
+//			int v = neighbor_v2[i][j];
+//			neighborHash_v2[i].insert(v);
+//		}
+//	}
+
 }
 
 void BiGraph::addEdge(vid_t u, vid_t v)
@@ -199,6 +230,12 @@ bool BiGraph::isEdge(vid_t u, vid_t v)
 		return true;
 	else
 		return false;
+	/*if (neighborHash_v1[u].find(v) == neighborHash_v1[u].end())
+	 {
+	 return false;
+	 }
+	 else
+	 return true;*/
 }
 
 void BiGraph::pruneCore(num_t v1_min, num_t v2_min)
@@ -716,6 +753,35 @@ void BiGraph::compressGraph(vector<int> &prunedV1, vector<int> &prunedV2)
 		swap(degree_v1, n_degree_v2);
 
 	}
+
+	vector<unordered_set<vid_t>> n_neighborHash_v1;
+	//vector<unordered_set<vid_t>> n_neighborHash_v2;
+
+	//n_neighborHash_v1.resize(num_v1);
+	//n_neighborHash_v2.resize(num_v2);
+
+//	for (int i = 0; i < num_v1; ++i)
+//	{
+//		n_neighborHash_v1[i].reserve(10*neighbor_v1[i].size());
+//		for (int j = 0; j < neighbor_v1[i].size(); ++j)
+//		{
+//			int v = neighbor_v1[i][j];
+//			n_neighborHash_v1[i].insert(v);
+//		}
+//	}
+
+//	for (int i = 0; i < num_v2; ++i)
+//	{
+//		n_neighborHash_v2[i].reserve(2*neighbor_v2[i].size());
+//		for (int j = 0; j < neighbor_v2[i].size(); ++j)
+//		{
+//			int v = neighbor_v2[i][j];
+//			n_neighborHash_v2[i].insert(v);
+//		}
+//	}
+
+	//swap(n_neighborHash_v1, neighborHash_v1);
+	//swap(n_neighborHash_v2, neighborHash_v2);
 
 	/*for (int i = 0; i < num_v1; ++i)
 	 {

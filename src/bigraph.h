@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include "utility.h"
 
 class Edge
@@ -71,6 +72,8 @@ public:
 	num_t getV2Num() {return num_v2;}
 	num_t getV1Degree(vid_t u) {return degree_v1[u];}
 	num_t getV2Degree(vid_t u) {return degree_v2[u];}
+	std::vector<vid_t> & getV2Neighbors(vid_t u) { return neighbor_v2[u];}
+	std::vector<vid_t> & getV1Neighbors(vid_t u) { return neighbor_v1[u];}
 	void print();
 	void printSum();
 	void printCout();
@@ -95,6 +98,9 @@ private:
 
 	std::vector<std::vector<vid_t>> neighbor_v1;
 	std::vector<std::vector<vid_t>> neighbor_v2;
+
+	//std::vector<std::unordered_set<vid_t>> neighborHash_v1;
+	//std::vector<std::unordered_set<vid_t>> neighborHash_v2;
 
 	std::vector<int> degree_v1;
 	std::vector<int> degree_v2;

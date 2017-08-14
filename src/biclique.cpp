@@ -49,20 +49,8 @@ long long node_num;
 double time_check, time_expand, time_out, time_sort;
 #endif
 
-void BCE::biclique_enumerate(string dir)
+void BCE::biclique_enumerate()
 {
-	BiGraph bg(dir);
-	//bg.print();
-	bg.printSum();
-	//bg.pruneSquareEdge(2, 3);
-	//bg.pruneSquareNode(2, 3);
-	bg.pruneSquare(2, 3);
-	bg.printSum();
-	//bg.pruneCore(2, 3);
-	//bg.print();
-	bg.printSum();
-	cerr << "finishing load the graph" << endl;
-	//return;
 
 	//string output = dir + "bg.txt";
 	//FILE *fp1 = fopen(output.c_str(), "w");
@@ -72,7 +60,6 @@ void BCE::biclique_enumerate(string dir)
 	num_t n2 = bg.getV2Num();
 	vid_t left[n1], right[n2], clique[n2];
 	vid_t u, v;
-	int noc[n2], tmpnoc, x;
 
 	memset(clique, -1, n2 * sizeof(vid_t));  // initially Clique is empty
 	for (u = 0; u < n1; u++)
@@ -91,29 +78,20 @@ void BCE::biclique_enumerate(string dir)
 	{
 		/* Sort the candidate right vertices */
 		cerr << "version 2" << endl;
-		/*memset(noc, 0, n2 * sizeof(int));
-		 for (v = 0; v < n2; v++)
-		 {
-		 tmpnoc = 0;
-		 for (u = 0; u < n1; u++)
-		 if (bg.isEdge(u, v))
-		 tmpnoc++;
-		 x = v - 1;
-		 while (x >= 0 && noc[x] > tmpnoc)
-		 {
-		 noc[x + 1] = noc[x];
-		 right[x + 1] = right[x];
-		 x--;
-		 }
-		 noc[x + 1] = tmpnoc;
-		 right[x + 1] = v;
-		 }*/
-		sort(right, right + n2, [&bg](int a, int b)
+		sort(right, right + n2, [this](int a, int b)
 		{	return bg.getV2Degree(a) < bg.getV2Degree(b);});
-		//for(int i = 0; i < 4; ++i)
-		//	cout<<bg.getV2Degree(right[i])<<", ";
 		cerr << "begin find..." << endl;
 		biclique_find_improve(fp1, bg, clique, 0, left, n1, right, 0, n2);
+	}
+	else if (VERSION == 3)
+	{
+		cerr << "version 3" << endl;
+		sort(right, right + n2, [this](int a, int b)
+		{	return this->bg.getV2Degree(a) < this->bg.getV2Degree(b);});
+		cerr << "begin find..." << endl;
+		int level = 0;
+		biclique_find_improve(fp1, bg, clique, 0, left, n1, right, 0, n2);
+
 	}
 
 	cout << "Number of bicliques         : " << bs.sum << endl;
@@ -130,7 +108,7 @@ void BCE::biclique_enumerate(string dir)
  * Function: biclique_out()                                      *
  *   Print out a biclique: left and right vertices on two lines  *
  * ------------------------------------------------------------- */
-void BCE::biclique_out(FILE *fp, vid_t *right, int nr, vid_t *left, int nl)
+void BCE::biclique_out(FILE *fp, vid_t *left, int nl, vid_t *right, int nr)
 {
 	bs.sum++;
 
@@ -144,6 +122,10 @@ void BCE::biclique_out(FILE *fp, vid_t *right, int nr, vid_t *left, int nl)
 		bs.vmaxl = nl;
 		bs.vmaxr = nr;
 	}
+	if (bs.sum % 1000 == 0)
+	{
+		cout << "Number of bicliques: " << bs.sum << endl;
+	}
 	/*if (bs.sum % 1000 == 0)
 	 {
 	 cout << "Number of bicliques         : " << bs.sum << endl;
@@ -153,26 +135,20 @@ void BCE::biclique_out(FILE *fp, vid_t *right, int nr, vid_t *left, int nl)
 	 << bs.vmaxr << ")\n";
 	 }*/
 
-#ifdef PRINT
-	int i;
-#ifdef PERFORMANCE
-	double utime = get_cur_time();
-#endif
-	for (i = 0; i < nr - 1; i++)
-	{
-		fprintf(fp, "%d\t", right[i]);
-	}
-	fprintf(fp, "%d\n", right[i]);
+	/*int i;
+
 	for (i = 0; i < nl - 1; i++)
 	{
 		fprintf(fp, "%d\t", left[i]);
 	}
 	fprintf(fp, "%d\n", left[i]);
-	fprintf(fp, "\n");
-#ifdef PERFORMANCE
-	time_out += get_cur_time() - utime;
-#endif
-#endif
+
+	for (i = 0; i < nr - 1; i++)
+	{
+		fprintf(fp, "%d\t", right[i]);
+	}
+	fprintf(fp, "%d\n", right[i]);
+	fprintf(fp, "\n");*/
 }
 
 /* ------------------------------------------------------------- *
@@ -544,16 +520,507 @@ void BCE::biclique_find_improve(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
 	return;
 }
 
+void BCE::biclique_find_improve2(FILE *fp, BiGraph &bg, vid_t *clique, int nc,
+		vid_t *left, int nl, vid_t *right, int ne, int ce)
+{
+	vid_t new_left[nl];
+	vid_t new_right[ce];
+	vid_t u, v, w, j, k;
+	int new_nc, new_nl, new_ne, new_ce;
+	int count, is_maximal = 1;
+
+	int not_nl;  // position of not_left
+	int nn;      // number of vertices directly go to not
+	// End
+
+	/* Same operations as v2 on each candidate in order */
+	while (ne < ce)
+	{
+
+		/* Choose the next candidate in P */
+		v = right[ne];
+
+		/* Choose one vertex from candidate set */
+		new_nc = nc;
+		clique[new_nc++] = v;
+
+		/* Set right vertices in clique */
+		new_nl = 0;
+		not_nl = nl;
+
+		for (j = 0; j < nl; ++j)
+		{
+			leftBit[left[j]] = 0;
+		}
+
+		auto vNeighbors = bg.getV2Neighbors(v);
+		for (int i = 0; i < vNeighbors.size(); ++i)
+		{
+			int u = vNeighbors[i];
+			if (leftBit[u] == 0)
+				new_left[new_nl++] = u;
+			else
+				new_left[not_nl--] = u;
+		}
+
+		/* Set right vertices in not */
+		new_ne = 0;
+		is_maximal = 1;
+
+		for (int i = 0; i < ne; ++i)
+		{
+			dupBit[right[i]] = 0;
+		}
+
+		for (k = 0; k < new_nl; ++k)
+		{
+			v = new_left[k];
+			auto vNeighbors = bg.getV1Neighbors(v);
+			for (int i = 0; i < vNeighbors.size(); ++i)
+			{
+				u = vNeighbors[i];
+				if (dupBit[u] > -1)
+					dupBit[u]++;
+			}
+		}
+
+		for (j = 0; j < ne; ++j)
+		{
+			u = right[j];
+			if (dupBit[u] == new_nl)
+			{
+				is_maximal = 0;
+				break;
+			}
+			else if (dupBit[u] > 0)
+			{
+				new_right[new_ne++] = u;
+			}
+		}
+
+		/* Stop this branch if it is not maximal */
+		if (!is_maximal)
+		{
+			ne++;
+			continue;
+		}
+
+		/* Set right vertices in cand */
+		new_ce = new_ne;
+		nn = 1; // number of vertice will be put in not when backtracking
+
+		for (j = ne + 1; j < ce; ++j)
+		{
+			candBit[right[j]] = 0;
+		}
+
+		for (k = 0; k < new_nl; ++k)
+		{
+			v = new_left[k];
+			auto vNeighbors = bg.getV1Neighbors(v);
+			for (int i = 0; i < vNeighbors.size(); ++i)
+			{
+				u = vNeighbors[i];
+				if (candBit[u] > -1)
+					candBit[u]++;
+			}
+		}
+
+		for (j = ne + 1; j < ce; ++j)
+		{
+			w = right[j];
+			if (candBit[w] == new_nl)
+			{
+				clique[new_nc++] = w;
+				for (k = nl; k > not_nl; k--)
+				{
+					u = new_left[k];
+					if (bg.isEdge(u, w))
+						count++;
+				}
+				// switch such vertex with the one next to
+				// the last picked vertex to biclique
+				if (count == new_nl)
+				{
+					right[j] = right[ne + nn];
+					right[ne + nn] = w;
+					nn++;
+				}
+
+			}
+			else if (candBit[w] > 0)
+			{
+				/*x = new_ce - 1;
+				while (x >= new_ne && noc[x - new_ne] > count)
+				{
+					noc[x + 1 - new_ne] = noc[x - new_ne];
+					new_right[x + 1] = new_right[x];
+					x--;
+				}
+				noc[x + 1 - new_ne] = count;
+				new_right[x + 1] = w;*/
+				new_right[new_ce++] = w;
+			}
+
+		}
+
+		sort(new_right, new_right+new_ce, [this](int a, int b){return this->candBit[a] < this->candBit[b];});
+
+		for (j = 0; j < nl; ++j)
+		{
+			leftBit[left[j]] = -1;
+		}
+
+		for (j = ne + 1; j < ce; ++j)
+		{
+			candBit[right[j]] = -1;
+		}
+
+		for (int i = 0; i < ne; ++i)
+		{
+			dupBit[right[i]] = -1;
+		}
+
+		/* Print out the found maximal biclique */
+		if (new_nc >= RLEAST && new_nl >= LLEAST)
+		{
+			biclique_out(fp, clique, new_nc, new_left, new_nl);
+		}
+
+		/* Recursively find bicliques */
+		if (new_nl >= LLEAST && (new_ne < new_ce) && (new_nc + (new_ce - new_ne) >= RLEAST))
+		{
+			biclique_find_improve2(fp, bg, clique, new_nc, new_left, new_nl,
+					new_right, new_ne, new_ce);
+		}
+
+
+		for(int i = 0; i < nn; ++i)
+		{
+			v = right[ne+i];
+			auto vNeighbors = bg.getV2Neighbors(v);
+			for(j = 0; j < vNeighbors.size(); ++j)
+			{
+				u = vNeighbors[j];
+				auto uNeighbors = bg.getV1Neighbors(u);
+				for(k = 0; k < uNeighbors.size(); ++k)
+				{
+					int vv = uNeighbors[u];
+					adjPrunNodes.insert(vv);
+				}
+			}
+		}
+
+		adjPrunNodes.insert(right[ne]);
+
+		nn = 0;
+		for(int i = ne; i < ce; ++i)
+		{
+			adjPrunList.push_back(right[ne]);
+		}
+
+		for(auto it = adjPrunList.begin(); it != adjPrunList.end();)
+		{
+			if(adjPrunNodes.find(*it) != adjPrunNodes.end())
+			{
+				it = adjPrunList.erase(it);
+				right[ne+nn] = *it;
+				nn++;
+
+			}
+			else
+				++it;
+		}
+
+		ne += nn;
+
+		int i = 0;
+		for(auto it = adjPrunList.begin(); it != adjPrunList.end(); ++it)
+		{
+			right[ne+i] = *it;
+			i++;
+		}
+
+		adjPrunList.clear();
+		adjPrunNodes.clear();
+
+	}
+
+	return;
+}
+
+/*void BCE::biclique_find(BiGraph &bg, vid_t *left, int nl, vid_t *par, int np,
+ vid_t *cand, int nc, int nd, int &level)
+ {
+
+ cout << "level: " << level << endl;
+ cout << "left, " << nl << ": ";
+ for (int i = 0; i < nl; ++i)
+ cout << left[i] << " ";
+ cout << endl;
+ cout << "par, " << np << ": ";
+ for (int i = 0; i < np; ++i)
+ cout << par[i] << " ";
+ cout << endl;
+ cout << "cand, " << nc << ": ";
+ for (int i = 0; i < nc; ++i)
+ cout << cand[i] << " ";
+ cout << endl;
+ cout << "dup, " << nd - nc << ": ";
+ for (int i = nc; i < nd; ++i)
+ cout << cand[i] << " ";
+ cout << endl;
+ cout << "leftBit: ";
+ for (int i = 0; i < bg.getV1Num(); ++i)
+ if (leftBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl;
+ cout << "candBit: ";
+ for (int i = 0; i < bg.getV2Num(); ++i)
+ if (candBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl;
+ cout << "dupBit: ";
+ for (int i = 0; i < bg.getV2Num(); ++i)
+ if (dupBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl << endl;
+
+ if (nc == 0 && nc == nd)
+ {
+ biclique_out(stdout, left, nl, par, np);
+ return;
+ }
+
+ if (nc == 0)
+ {
+ return;
+ }
+
+ vid_t new_left[nl];
+ vid_t new_cand[nd];
+ vid_t u, v, vv;
+ int new_nc, new_nl, new_np, new_nd;
+
+ while (nc > 0)
+ {
+ v = cand[0];
+
+ new_np = np;
+ par[new_np++] = v;
+
+ new_nl = 0;
+
+ candBit[v] = 0;
+ auto vNeighbors = bg.getV2Neighbors(v);
+ for (int i = 0; i < vNeighbors.size(); ++i)
+ {
+ u = vNeighbors[i];
+ if (leftBit[u] == 1)
+ new_left[new_nl++] = u;
+ }
+
+ for (int i = 0; i < nl; ++i)
+ {
+ leftBit[left[i]] = 0;
+ }
+
+ for (int i = 0; i < new_nl; ++i)
+ {
+ leftBit[new_left[i]] = 1;
+ }
+
+ new_nc = 0;
+ for (int i = 0; i < new_nl; ++i)
+ {
+ u = new_left[i];
+ auto uNeighbors = bg.getV1Neighbors(u);
+ for (int j = 0; j < uNeighbors.size(); ++j)
+ {
+ vv = uNeighbors[j];
+ if (candBit[vv] == 1)
+ {
+ new_cand[new_nc++] = vv;
+ candBit[vv] = 0;
+ }
+ }
+ }
+
+ new_nd = new_nc;
+ for (int i = 0; i < new_nl; ++i)
+ {
+ u = new_left[i];
+ auto uNeighbors = bg.getV1Neighbors(u);
+ for (int j = 0; j < uNeighbors.size(); ++j)
+ {
+ vv = uNeighbors[j];
+ if (level == 2)
+ {
+ cout << "vv: " << vv << " ";
+ cout << "dupBit: ";
+ for (int i = 0; i < bg.getV2Num(); ++i)
+ if (dupBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl;
+ }
+ if (dupBit[vv] == 1)
+ {
+ new_cand[new_nd++] = vv;
+ dupBit[vv] = 0;
+ }
+ }
+ }
+
+ for (int i = 0; i < nc; ++i)
+ {
+ candBit[cand[i]] = 0;
+ }
+
+ for (int i = nc; i < nd; ++i)
+ {
+ dupBit[cand[i]] = 0;
+ }
+
+ for (int i = 0; i < new_nc; ++i)
+ {
+ candBit[new_cand[i]] = 1;
+ }
+
+ for (int i = new_nc; i < new_nd; ++i)
+ {
+ dupBit[new_cand[i]] = 1;
+ }
+
+ level++;
+ cout << "new left:";
+ for (int i = 0; i < new_nl; ++i)
+ cout << new_left[i] << " ";
+ cout << endl;
+ cout << "new par:";
+ for (int i = 0; i < new_np; ++i)
+ cout << par[i] << " ";
+ cout << endl;
+ cout << "new cand:";
+ for (int i = 0; i < new_nc; ++i)
+ cout << new_cand[i] << " ";
+ cout << endl;
+ cout << "new dup:";
+ for (int i = nc; i < new_nd; ++i)
+ cout << new_cand[i] << " ";
+ cout << endl;
+ cout << "leftBit: ";
+ for (int i = 0; i < bg.getV1Num(); ++i)
+ if (leftBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl;
+ cout << "candBit: ";
+ for (int i = 0; i < bg.getV2Num(); ++i)
+ if (candBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl;
+ cout << "dupBit: ";
+ for (int i = 0; i < bg.getV2Num(); ++i)
+ if (dupBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl << endl;
+
+ biclique_find(bg, new_left, new_nl, par, new_np, new_cand, new_nc,
+ new_nd, level);
+
+ level--;
+ for (int i = 0; i < nl; ++i)
+ {
+ leftBit[left[i]] = 1;
+ }
+
+ swap(cand[0], cand[nc - 1]);
+ nc--;
+
+ for (int i = 0; i < nc; ++i)
+ {
+ candBit[cand[i]] = 1;
+ }
+
+ if (nc == 0)
+ {
+ for (int i = nc; i < nd; ++i)
+ {
+ dupBit[cand[i]] = 0;
+ }
+ }
+ else
+ {
+ for (int i = nc; i < nd; ++i)
+ {
+ dupBit[cand[i]] = 1;
+ }
+ }
+
+ cout << "after level: " << level << endl;
+ cout << "left, " << nl << ": ";
+ for (int i = 0; i < nl; ++i)
+ cout << left[i] << " ";
+ cout << endl;
+ cout << "par, " << np << ": ";
+ for (int i = 0; i < np; ++i)
+ cout << par[i] << " ";
+ cout << endl;
+ cout << "cand, " << nc << ": ";
+ for (int i = 0; i < nc; ++i)
+ cout << cand[i] << " ";
+ cout << endl;
+ cout << "dup, " << nd - nc << ": ";
+ for (int i = nc; i < nd; ++i)
+ cout << cand[i] << " ";
+ cout << endl;
+ cout << "leftBit: ";
+ for (int i = 0; i < bg.getV1Num(); ++i)
+ if (leftBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl;
+ cout << "candBit: ";
+ for (int i = 0; i < bg.getV2Num(); ++i)
+ if (candBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl;
+ cout << "dupBit: ";
+ for (int i = 0; i < bg.getV2Num(); ++i)
+ if (dupBit[i] == 0)
+ cout << "0";
+ else
+ cout << "1";
+ cout << endl << endl;
+ }
+ }*/
+
 void BCE::biclique_find_pivot(BiGraph &bg, vid_t *clique, int nc, vid_t *left,
 		int nl, vid_t *right, int ne, int ce)
 {
 
 }
 
-BiCliqueStat bsInit()
-{
-	BiCliqueStat bs;
-	return bs;
-}
-
-BiCliqueStat BCE::bs = bsInit();
+//BiCliqueStat bsInit()
+//{
+//	BiCliqueStat bs;
+//	return bs;
+//}
+//
+//BiCliqueStat BCE::bs = bsInit();
